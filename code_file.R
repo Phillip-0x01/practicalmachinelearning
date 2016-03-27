@@ -6,7 +6,7 @@ set.seed(1127)
 inTrainURL <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
 testURL <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
 
-trainData <- read.csv(url(trainURL), na.strings=c("NA","#DIV/0!",""))
+trainData <- read.csv(url(inTrainURL), na.strings=c("NA","#DIV/0!",""))
 courseTesting <- read.csv(url(testURL), na.strings=c("NA","#DIV/0!",""))
 
 inTrain <- createDataPartition(y=trainData$classe, p=0.6, list=FALSE)

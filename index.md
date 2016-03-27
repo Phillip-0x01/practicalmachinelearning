@@ -1,11 +1,6 @@
----
-title: "Machine Learning Course Project"
-author: "Phillip"
-date: "March 14, 2016"
-output: 
-  html_document: 
-    keep_md: yes
----
+# Machine Learning Course Project
+Phillip  
+March 14, 2016  
 
 
 
@@ -37,10 +32,26 @@ The 'caret' and 'radomForest' packages will be used for this project so they are
 The datasets were then downloaded from the websites listed above and stored in memory.  Alternatively, the datasets could have been downloaded to the hard drive and read in from there, however I chose not to do so for this project.  Since the test dataset is being used for course grading purposes the training dataset will need to be split 60/40 into a testing and training dataset to build the model.  After the data is split I'll print out the dimensions of both sets to review them.  
  
  
-```{r}
-library(caret)
-library(randomForest)
 
+```r
+library(caret)
+```
+
+```
+## Loading required package: lattice
+## Loading required package: ggplot2
+```
+
+```r
+library(randomForest)
+```
+
+```
+## randomForest 4.6-12
+## Type rfNews() to see new features/changes/bug fixes.
+```
+
+```r
 set.seed(1127)
 
 inTrainURL <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
@@ -53,6 +64,17 @@ inTrain <- createDataPartition(y=trainData$classe, p=0.6, list=FALSE)
 training <- trainData[inTrain,]
 testing <- trainData[-inTrain,]
 dim(training); dim(testing)
+```
+
+```
+## [1] 11776   160
+```
+
+```
+## [1] 7846  160
+```
+
+```r
 # rm(inTrain,trainData)
 ```
 
@@ -61,15 +83,23 @@ dim(training); dim(testing)
 As you can see above, the datasets contain 160 variables (less the one prediction variable) so before the model is created I'll want remove any of those which may have little or no impact.  I'll start by first looking at the number of na values per variable across the dataset to see if anything stands out.    
 
 
-```{r}
+
+```r
 NAcounts <- apply(training, 2, function(x) length(which(!is.na(x))))
 table(NAcounts)
+```
+
+```
+## NAcounts
+##     0   197   208   210   232   243   244   246   249   250 11776 
+##     6     7     2     2     2     2     5     5     2    67    60
 ```
 
 The table above shows there are 60 variables which have values for every record, while the rest of the variables have far less (i.e. a lot of na's), so I'll drop those across all three datasets. Next, I'll remove any variables that have near zero variance.  To do this I'm wrapping the function in an IF statement because if it returns zero variables with near zero variance the function will remove all of the variables from the datasets. 
 
 
-```{r}
+
+```r
 training <- training[ , colSums(is.na(training)) == 0]
 if (length(nearZeroVar(training)) > 0) {
   training <- training[, -nearZeroVar(training)] 
@@ -87,18 +117,51 @@ if (length(nearZeroVar(courseTesting)) > 0) {
 dim(training); dim(testing)
 ```
 
+```
+## [1] 11776    59
+```
+
+```
+## [1] 7846   59
+```
+
 With 59 variables still in the datasets that means there was only one variable which had a near zero variance.  One last thing that I can do is look at the names of the variables and possible the raw data to determine if any others can be dropped.  This is usually something that would be done initially, however I was not able to find any documents which explained what each of the variables were and with 160 to go through I skipped that step.  
 
 
-```{r}
+
+```r
 names(training)
+```
+
+```
+##  [1] "X"                    "user_name"            "raw_timestamp_part_1"
+##  [4] "raw_timestamp_part_2" "cvtd_timestamp"       "num_window"          
+##  [7] "roll_belt"            "pitch_belt"           "yaw_belt"            
+## [10] "total_accel_belt"     "gyros_belt_x"         "gyros_belt_y"        
+## [13] "gyros_belt_z"         "accel_belt_x"         "accel_belt_y"        
+## [16] "accel_belt_z"         "magnet_belt_x"        "magnet_belt_y"       
+## [19] "magnet_belt_z"        "roll_arm"             "pitch_arm"           
+## [22] "yaw_arm"              "total_accel_arm"      "gyros_arm_x"         
+## [25] "gyros_arm_y"          "gyros_arm_z"          "accel_arm_x"         
+## [28] "accel_arm_y"          "accel_arm_z"          "magnet_arm_x"        
+## [31] "magnet_arm_y"         "magnet_arm_z"         "roll_dumbbell"       
+## [34] "pitch_dumbbell"       "yaw_dumbbell"         "total_accel_dumbbell"
+## [37] "gyros_dumbbell_x"     "gyros_dumbbell_y"     "gyros_dumbbell_z"    
+## [40] "accel_dumbbell_x"     "accel_dumbbell_y"     "accel_dumbbell_z"    
+## [43] "magnet_dumbbell_x"    "magnet_dumbbell_y"    "magnet_dumbbell_z"   
+## [46] "roll_forearm"         "pitch_forearm"        "yaw_forearm"         
+## [49] "total_accel_forearm"  "gyros_forearm_x"      "gyros_forearm_y"     
+## [52] "gyros_forearm_z"      "accel_forearm_x"      "accel_forearm_y"     
+## [55] "accel_forearm_z"      "magnet_forearm_x"     "magnet_forearm_y"    
+## [58] "magnet_forearm_z"     "classe"
 ```
 
 
 After reviewing the names and looking at the some of the raw data I've determine that the first six variables can be removed.  The first variable just contains row number, the second is the users name, and three through six contain data related to a timestamp.
 
 
-```{r}
+
+```r
 training <- training[, -c(1:6)]  
 testing <- testing[ ,-c(1:6)]
 courseTesting <- courseTesting[ ,-c(1:6)]
@@ -109,27 +172,74 @@ courseTesting <- courseTesting[ ,-c(1:6)]
 The model is then created using the randomForest package with the number of tress set to the default value of 500.  Once done it's used to predict the classe variable in the testing dataset for cross validation purposes, where we'll look at the accuracy percentage to determine how well it performed.  
 
 
-```{r}
+
+```r
 fitMod <- randomForest(classe ~ .,training, ntree=500)
 testing$predicted.response <- predict(fitMod, testing)
 confusionMatrix(data=testing$predicted.response, reference=testing$classe, positive='yes')
+```
+
+```
+## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    A    B    C    D    E
+##          A 2230    7    0    0    0
+##          B    2 1505   10    0    0
+##          C    0    5 1355   16    2
+##          D    0    1    3 1269    3
+##          E    0    0    0    1 1437
+## 
+## Overall Statistics
+##                                           
+##                Accuracy : 0.9936          
+##                  95% CI : (0.9916, 0.9953)
+##     No Information Rate : 0.2845          
+##     P-Value [Acc > NIR] : < 2.2e-16       
+##                                           
+##                   Kappa : 0.9919          
+##  Mcnemar's Test P-Value : NA              
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity            0.9991   0.9914   0.9905   0.9868   0.9965
+## Specificity            0.9988   0.9981   0.9964   0.9989   0.9998
+## Pos Pred Value         0.9969   0.9921   0.9833   0.9945   0.9993
+## Neg Pred Value         0.9996   0.9979   0.9980   0.9974   0.9992
+## Prevalence             0.2845   0.1935   0.1744   0.1639   0.1838
+## Detection Rate         0.2842   0.1918   0.1727   0.1617   0.1832
+## Detection Prevalence   0.2851   0.1933   0.1756   0.1626   0.1833
+## Balanced Accuracy      0.9989   0.9948   0.9935   0.9929   0.9982
 ```
 
 
 Wow, 99.3% accuracy!  With an accuracy this high the out of sample error rate should be pretty low but let's double check to make sure. 
 
 
-```{r}
+
+```r
 missClass = function(values, prediction) {
   sum(prediction != values)/length(values)
 }
 missClass(testing$classe, testing$predicted.response)
 ```
 
+```
+## [1] 0.006372674
+```
+
 Based on the miss classification rate on the testing subset, an unbiased estimate of the random forest's out-of-sample error rate is 0.06%.
 
 
 ###Quiz Prediction
-```{r}
+
+```r
 predict(fitMod, courseTesting)
+```
+
+```
+##  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 
+##  B  A  B  A  A  E  D  D  A  A  B  C  B  A  E  E  A  B  B  B 
+## Levels: A B C D E
 ```
