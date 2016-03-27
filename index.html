@@ -21,8 +21,8 @@
     <section class="main-content">
       <p>The following report was an assignment completed during my enrollment in the John Hopkin's Machine Learning Course on Coursera.  The Project Goal and Background Information sections below are copied directly from the course website while the rest of the paper details how I went about completing the assignment. </p>
 
-<h3>
-<a id="project-goal" class="anchor" href="#project-goal" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Project Goal</h3>
+<h2>
+<a id="project-goal" class="anchor" href="#project-goal" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Project Goal</h2>
 
 <p>The goal of your project is to predict the manner in which they did the exercise. This is the “classe” variable in the training set. You may use any of the other variables to predict with. You should create a report describing how you built your model, how you used cross validation, what you think the expected out of sample error is, and why you made the choices you did. You will also use your prediction model to predict 20 different test cases.</p>
 
@@ -30,15 +30,15 @@
 
 <p>You should also apply your machine learning algorithm to the 20 test cases available in the test data above. Please submit your predictions in appropriate format to the programming assignment for automated grading. See the programming assignment for additional details.</p>
 
-<h3>
-<a id="background-information" class="anchor" href="#background-information" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Background Information</h3>
+<h2>
+<a id="background-information" class="anchor" href="#background-information" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Background Information</h2>
 
 <p>Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. </p>
 
 <p>In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: <a href="http://groupware.les.inf.puc-rio.br/har">http://groupware.les.inf.puc-rio.br/har</a> (see the section on the Weight Lifting Exercise Dataset).</p>
 
-<h3>
-<a id="getting-and-loading-datasets" class="anchor" href="#getting-and-loading-datasets" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Getting and Loading Datasets</h3>
+<h2>
+<a id="getting-and-loading-datasets" class="anchor" href="#getting-and-loading-datasets" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Getting and Loading Datasets</h2>
 
 <p>The following anaylsis was conducted using R version 3.1.3 (2015-03-09) and a MacBook Pro (Retina, 15-inch, Mid 2014) with a 2.2 Ghz Intel Core i7 Processor and 16 GB 1600 MHz DDR3 Memory.  </p>
 
@@ -63,13 +63,20 @@ set.seed(<span class="pl-c1">1127</span>)
 dim(<span class="pl-smi">training</span>); dim(<span class="pl-smi">testing</span>)
 <span class="pl-c"># rm(inTrain,trainData)</span></pre></div>
 
-<h3>
-<a id="data-cleaning" class="anchor" href="#data-cleaning" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Data Cleaning</h3>
+<div class="highlight highlight-source-r"><pre>[<span class="pl-c1">1</span>] <span class="pl-c1">11776</span>   <span class="pl-c1">160</span>
+[<span class="pl-c1">1</span>] <span class="pl-c1">7846</span>  <span class="pl-c1">160</span></pre></div>
+
+<h2>
+<a id="data-cleaning" class="anchor" href="#data-cleaning" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Data Cleaning</h2>
 
 <p>As you can see above, the datasets contain 160 variables (less the one prediction variable) so before the model is created I'll want remove any of those which may have little or no impact.  I'll start by first looking at the number of na values per variable across the dataset to see if anything stands out.    </p>
 
 <div class="highlight highlight-source-r"><pre><span class="pl-smi">NAcounts</span> <span class="pl-k">&lt;-</span> apply(<span class="pl-smi">training</span>, <span class="pl-c1">2</span>, <span class="pl-k">function</span>(<span class="pl-smi">x</span>) length(which(<span class="pl-k">!</span>is.na(<span class="pl-smi">x</span>))))
 table(<span class="pl-smi">NAcounts</span>)</pre></div>
+
+<div class="highlight highlight-source-r"><pre><span class="pl-smi">NAcounts</span>
+   <span class="pl-c1">0</span>  <span class="pl-c1">118</span>  <span class="pl-c1">119</span>  <span class="pl-c1">124</span>  <span class="pl-c1">125</span>  <span class="pl-c1">126</span>  <span class="pl-c1">142</span>  <span class="pl-c1">152</span>  <span class="pl-c1">153</span>  <span class="pl-c1">155</span>  <span class="pl-c1">156</span> <span class="pl-c1">7846</span> 
+   <span class="pl-c1">6</span>    <span class="pl-c1">3</span>    <span class="pl-c1">1</span>    <span class="pl-c1">2</span>    <span class="pl-c1">4</span>    <span class="pl-c1">1</span>    <span class="pl-c1">2</span>    <span class="pl-c1">6</span>    <span class="pl-c1">1</span>    <span class="pl-c1">5</span>   <span class="pl-c1">69</span>   <span class="pl-c1">60</span> </pre></div>
 
 <p>The table above shows there are 60 variables which have values for every record, while the rest of the variables have far less (i.e. a lot of na's), so I'll drop those across all three datasets. Next, I'll remove any variables that have near zero variance.  To do this I'm wrapping the function in an IF statement because if it returns zero variables with near zero variance the function will remove all of the variables from the datasets. </p>
 
@@ -89,6 +96,8 @@ table(<span class="pl-smi">NAcounts</span>)</pre></div>
 }
 dim(<span class="pl-smi">training</span>); dim(<span class="pl-smi">testing</span>)</pre></div>
 
+<div class="highlight highlight-source-r"><pre>[<span class="pl-c1">1</span>] <span class="pl-c1">11776</span>    <span class="pl-c1">59</span></pre></div>
+
 <p>With 59 variables still in the datasets that means there was only one variable which had a near zero variance.  One last thing that I can do is look at the names of the variables and possible the raw data to determine if any others can be dropped.  This is usually something that would be done initially, however I was not able to find any documents which explained what each of the variables were and with 160 to go through I skipped that step.  </p>
 
 <div class="highlight highlight-source-r"><pre>names(<span class="pl-smi">training</span>)</pre></div>
@@ -99,14 +108,34 @@ dim(<span class="pl-smi">training</span>); dim(<span class="pl-smi">testing</spa
 <span class="pl-smi">testing</span> <span class="pl-k">&lt;-</span> <span class="pl-smi">testing</span>[ ,<span class="pl-k">-</span>c(<span class="pl-c1">1</span><span class="pl-k">:</span><span class="pl-c1">6</span>)]
 <span class="pl-smi">courseTesting</span> <span class="pl-k">&lt;-</span> <span class="pl-smi">courseTesting</span>[ ,<span class="pl-k">-</span>c(<span class="pl-c1">1</span><span class="pl-k">:</span><span class="pl-c1">6</span>)]</pre></div>
 
-<h3>
-<a id="model-training" class="anchor" href="#model-training" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Model Training</h3>
+<h2>
+<a id="model-training" class="anchor" href="#model-training" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Model Training</h2>
 
 <p>The model is then created using the randomForest package with the number of tress set to the default value of 500.  Once done it's used to predict the classe variable in the testing dataset for cross validation purposes, where we'll look at the accuracy percentage to determine how well it performed.  </p>
 
 <div class="highlight highlight-source-r"><pre><span class="pl-smi">fitMod</span> <span class="pl-k">&lt;-</span> randomForest(<span class="pl-smi">classe</span> <span class="pl-k">~</span> .,<span class="pl-smi">training</span>, <span class="pl-v">ntree</span><span class="pl-k">=</span><span class="pl-c1">500</span>)
 <span class="pl-smi">testing</span><span class="pl-k">$</span><span class="pl-smi">predicted.response</span> <span class="pl-k">&lt;-</span> predict(<span class="pl-smi">fitMod</span>, <span class="pl-smi">testing</span>)
 confusionMatrix(<span class="pl-v">data</span><span class="pl-k">=</span><span class="pl-smi">testing</span><span class="pl-k">$</span><span class="pl-smi">predicted.response</span>, <span class="pl-v">reference</span><span class="pl-k">=</span><span class="pl-smi">testing</span><span class="pl-k">$</span><span class="pl-smi">classe</span>, <span class="pl-v">positive</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">'</span>yes<span class="pl-pds">'</span></span>)</pre></div>
+
+<div class="highlight highlight-source-r"><pre><span class="pl-smi">Confusion</span> <span class="pl-smi">Matrix</span> <span class="pl-smi">and</span> <span class="pl-smi">Statistics</span>
+
+          <span class="pl-smi">Reference</span>
+<span class="pl-smi">Prediction</span>    <span class="pl-smi">A</span>    <span class="pl-smi">B</span>    <span class="pl-smi">C</span>    <span class="pl-smi">D</span>    <span class="pl-smi">E</span>
+         <span class="pl-smi">A</span> <span class="pl-c1">2230</span>    <span class="pl-c1">7</span>    <span class="pl-c1">0</span>    <span class="pl-c1">0</span>    <span class="pl-c1">0</span>
+         <span class="pl-smi">B</span>    <span class="pl-c1">2</span> <span class="pl-c1">1505</span>   <span class="pl-c1">10</span>    <span class="pl-c1">0</span>    <span class="pl-c1">0</span>
+         <span class="pl-smi">C</span>    <span class="pl-c1">0</span>    <span class="pl-c1">5</span> <span class="pl-c1">1355</span>   <span class="pl-c1">16</span>    <span class="pl-c1">2</span>
+         <span class="pl-smi">D</span>    <span class="pl-c1">0</span>    <span class="pl-c1">1</span>    <span class="pl-c1">3</span> <span class="pl-c1">1269</span>    <span class="pl-c1">3</span>
+         <span class="pl-smi">E</span>    <span class="pl-c1">0</span>    <span class="pl-c1">0</span>    <span class="pl-c1">0</span>    <span class="pl-c1">1</span> <span class="pl-c1">1437</span>
+
+<span class="pl-smi">Overall</span> <span class="pl-smi">Statistics</span>
+
+               <span class="pl-smi">Accuracy</span> <span class="pl-k">:</span> <span class="pl-c1">0.9936</span>          
+                 <span class="pl-c1">95</span>% <span class="pl-smi">CI</span> <span class="pl-k">:</span> (<span class="pl-c1">0.9916</span>, <span class="pl-c1">0.9953</span>)
+    <span class="pl-smi">No</span> <span class="pl-smi">Information</span> <span class="pl-smi">Rate</span> <span class="pl-k">:</span> <span class="pl-c1">0.2845</span>          
+    <span class="pl-smi">P</span><span class="pl-k">-</span><span class="pl-smi">Value</span> [<span class="pl-smi">Acc</span> <span class="pl-k">&gt;</span> <span class="pl-smi">NIR</span>] <span class="pl-k">:</span> <span class="pl-k">&lt;</span> <span class="pl-c1">2.2e-16</span>       
+
+                  <span class="pl-smi">Kappa</span> <span class="pl-k">:</span> <span class="pl-c1">0.9919</span>          
+ <span class="pl-smi">Mcnemar</span><span class="pl-s"><span class="pl-pds">'</span>s Test P-Value : NA              </span></pre></div>
 
 <p>Wow, 99.3% accuracy!  With an accuracy this high the out of sample error rate should be pretty low but let's double check to make sure. </p>
 
@@ -115,12 +144,18 @@ confusionMatrix(<span class="pl-v">data</span><span class="pl-k">=</span><span c
 }
 missClass(<span class="pl-smi">testing</span><span class="pl-k">$</span><span class="pl-smi">classe</span>, <span class="pl-smi">testing</span><span class="pl-k">$</span><span class="pl-smi">predicted.response</span>)</pre></div>
 
+<div class="highlight highlight-source-r"><pre>[<span class="pl-c1">1</span>] <span class="pl-c1">0.006372674</span></pre></div>
+
 <p>Based on the miss classification rate on the testing subset, an unbiased estimate of the random forest's out-of-sample error rate is 0.06%.</p>
 
-<h3>
-<a id="quiz-prediction" class="anchor" href="#quiz-prediction" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Quiz Prediction</h3>
+<h2>
+<a id="quiz-prediction" class="anchor" href="#quiz-prediction" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Quiz Prediction</h2>
 
 <div class="highlight highlight-source-r"><pre>predict(<span class="pl-smi">fitMod</span>, <span class="pl-smi">courseTesting</span>)</pre></div>
+
+<div class="highlight highlight-source-r"><pre> <span class="pl-c1">1</span>  <span class="pl-c1">2</span>  <span class="pl-c1">3</span>  <span class="pl-c1">4</span>  <span class="pl-c1">5</span>  <span class="pl-c1">6</span>  <span class="pl-c1">7</span>  <span class="pl-c1">8</span>  <span class="pl-c1">9</span> <span class="pl-c1">10</span> <span class="pl-c1">11</span> <span class="pl-c1">12</span> <span class="pl-c1">13</span> <span class="pl-c1">14</span> <span class="pl-c1">15</span> <span class="pl-c1">16</span> <span class="pl-c1">17</span> <span class="pl-c1">18</span> <span class="pl-c1">19</span> <span class="pl-c1">20</span> 
+ <span class="pl-smi">B</span>  <span class="pl-smi">A</span>  <span class="pl-smi">B</span>  <span class="pl-smi">A</span>  <span class="pl-smi">A</span>  <span class="pl-smi">E</span>  <span class="pl-smi">D</span>  <span class="pl-smi">D</span>  <span class="pl-smi">A</span>  <span class="pl-smi">A</span>  <span class="pl-smi">B</span>  <span class="pl-smi">C</span>  <span class="pl-smi">B</span>  <span class="pl-smi">A</span>  <span class="pl-smi">E</span>  <span class="pl-smi">E</span>  <span class="pl-smi">A</span>  <span class="pl-smi">B</span>  <span class="pl-smi">B</span>  <span class="pl-smi">B</span> 
+<span class="pl-smi">Levels</span><span class="pl-k">:</span> <span class="pl-smi">A</span> <span class="pl-smi">B</span> <span class="pl-smi">C</span> <span class="pl-smi">D</span> <span class="pl-smi">E</span></pre></div>
 
       <footer class="site-footer">
         <span class="site-footer-owner"><a href="https://github.com/phillip94/practicalmachinelearning">Practical Machine Learning Course Project</a> is maintained by <a href="https://github.com/phillip94">phillip94</a>.</span>
