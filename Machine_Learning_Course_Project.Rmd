@@ -60,7 +60,7 @@ dim(training); dim(testing)
 As you can see above, the datasets contain 160 variables (less the one prediction variable) so before the model is created I'll want remove any of those which may have little or no impact.  I'll start by first looking at the number of na values per variable across the dataset to see if anything stands out.    
 
 
-```{r }
+```{r echo=TRUE}
 NAcounts <- apply(training, 2, function(x) length(which(!is.na(x))))
 table(NAcounts)
 ```
@@ -69,7 +69,7 @@ table(NAcounts)
 The table above shows there are 60 variables which have values for every record, while the rest of the variables have far less (i.e. a lot of na's), so I'll drop those across all three datasets. Next, I'll remove any variables that have near zero variance.  To do this I'm wrapping the function in an IF statement because if it returns zero variables with near zero variance the function will remove all of the variables from the datasets. 
 
 
-```{r }
+```{r echo=TRUE}
 training <- training[ , colSums(is.na(training)) == 0]
 if (length(nearZeroVar(training)) > 0) {
   training <- training[, -nearZeroVar(training)] 
@@ -91,7 +91,7 @@ dim(training); dim(testing)
 With 59 variables still in the datasets that means there was only one variable which had a near zero variance.  One last thing that I can do is look at the names of the variables and possible the raw data to determine if any others can be dropped.  This is usually something that would be done initially, however I was not able to find any documents which explained what each of the variables were and with 160 to go through I skipped that step.  
 
 
-```{r }
+```{r echo=TRUE}
 names(training)
 ```
 
@@ -99,7 +99,7 @@ names(training)
 After reviewing the names and looking at the some of the raw data I've determine that the first six variables can be removed.  The first variable just contains row number, the second is the users name, and three through six contain data related to a timestamp.
 
 
-```{r }
+```{r echo=TRUE}
 training <- training[, -c(1:6)]  
 testing <- testing[ ,-c(1:6)]
 courseTesting <- courseTesting[ ,-c(1:6)]
@@ -110,7 +110,7 @@ courseTesting <- courseTesting[ ,-c(1:6)]
 The model is then created using the randomForest package with the number of tress set to the default value of 500.  Once done it's used to predict the classe variable in the testing dataset for cross validation purposes, where we'll look at the accuracy percentage to determine how well it performed.  
 
 
-```{r}
+```{r echo=TRUE}
 fitMod <- randomForest(classe ~ .,training, ntree=500)
 testing$predicted.response <- predict(fitMod, testing)
 confusionMatrix(data=testing$predicted.response, reference=testing$classe, positive='yes')
@@ -120,7 +120,7 @@ confusionMatrix(data=testing$predicted.response, reference=testing$classe, posit
 Wow, 99.3% accuracy!  With an accuracy this high the out of sample error rate should be pretty low but let's double check to make sure. 
 
 
-```{r}
+```{r echo=TRUE}
 missClass = function(values, prediction) {
   sum(prediction != values)/length(values)
 }
@@ -132,6 +132,6 @@ Based on the miss classification rate on the testing subset, an unbiased estimat
 
 
 ###Quiz Prediction
-```{r}
+```{r echo=TRUE}
 predict(fitMod, courseTesting)
 ```
