@@ -5,79 +5,133 @@ date: "March 14, 2016"
 output: html_document
 ---
 
-##Background Information
-This is a write up for the John Hopkin's Coursea Machine Learning Course Project.  Below is the background infomration for the assignment.  
 
-Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
 
-##Project Goal
+The following report was an assignment completed during my enrollment in the John Hopkin's Machine Learning Course on Coursera.  The Project Goal and Background Information sections below are copied directly from the course website while the rest of the paper details how I went about completing the assignment. 
+
+
+
+###Project Goal
 The goal of your project is to predict the manner in which they did the exercise. This is the “classe” variable in the training set. You may use any of the other variables to predict with. You should create a report describing how you built your model, how you used cross validation, what you think the expected out of sample error is, and why you made the choices you did. You will also use your prediction model to predict 20 different test cases.
 
 Your submission should consist of a link to a Github repo with your R markdown and compiled HTML file describing your analysis. Please constrain the text of the writeup to < 2000 words and the number of figures to be less than 5. It will make it easier for the graders if you submit a repo with a gh-pages branch so the HTML page can be viewed online (and you always want to make it easy on graders :-).
 
 You should also apply your machine learning algorithm to the 20 test cases available in the test data above. Please submit your predictions in appropriate format to the programming assignment for automated grading. See the programming assignment for additional details.
 
-##Setting Up Environment 
 
-The following packages will be used during the model building and testing so they are being loaded into the envinvrionment.  I am also setting a seed so this work can be reproduced by others.
-```{r}
+
+###Background Information
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. 
+
+In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+
+
+###Getting and Loading Datasets 
+The following anaylsis was conducted using R version 3.1.3 (2015-03-09) and a MacBook Pro (Retina, 15-inch, Mid 2014) with a 2.2 Ghz Intel Core i7 Processor and 16 GB 1600 MHz DDR3 Memory.  
+
+The 'caret' and 'radomForest' packages will be used for this project so they are loaded into the working environment first.  I've also set a seed (1127) to be used for pseudo random number generation so others are able to reproduce the model below.  
+
+The datasets were then downloaded from the websites listed above and stored in memory.  Alternatively, the datasets could have been downloaded to the hard drive and read in from there, however I chose not to do so for this project.  Since the test dataset is being used for course grading purposes the training dataset will need to be split 60/40 into a testing and training dataset to build the model.  After the data is split I'll print out the dimensions of both sets to review them.  
+ 
+ 
+```{r echo=TRUE}
 library(caret)
-library(ggplot2)
+library(randomForest)
 
 set.seed(1127)
-```
 
-
-##Datasets 
-
-Next the training and testing datasets are loaded into memory changing all "NA", "#DIV/0!", and "" into "NA" strings to make data cleaning easier.  The datasets could also be downloaded and read them in from the hard disk if you wanted a local copy of the data.  
-
-```{r}
-trainURL <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+inTrainURL <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
 testURL <- "http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
 
-training <- read.csv(url(trainURL), na.strings=c("NA","#DIV/0!",""))
-testing <- read.csv(url(testURL), na.strings=c("NA","#DIV/0!",""))
+trainData <- read.csv(url(inTrainURL), na.strings=c("NA","#DIV/0!",""))
+courseTesting <- read.csv(url(testURL), na.strings=c("NA","#DIV/0!",""))
+
+inTrain <- createDataPartition(y=trainData$classe, p=0.6, list=FALSE)
+training <- trainData[inTrain,]
+testing <- trainData[-inTrain,]
+dim(training); dim(testing)
+# rm(inTrain,trainData)
 ```
 
 
-##Data Exploration 
-Typically a dataset needs to be split into a training and testing set, however this data has already been split so that step is being skiped.  Next, let's take a look at the size of the training dataset.  
-```{r echo=TRUE}
-dim(training)
-```
 
-The dataset contains 160 variables which would create a rather slow and inefficent model, so the first thing to do is figure out which variables can be removed.  One of the quickest ways is to look at how many acutal values are in each variable and then eliminate the ones missing a good amount of data.  
+###Data Cleaning
+As you can see above, the datasets contain 160 variables (less the one prediction variable) so before the model is created I'll want remove any of those which may have little or no impact.  I'll start by first looking at the number of na values per variable across the dataset to see if anything stands out.    
+
 
 ```{r }
 NAcounts <- apply(training, 2, function(x) length(which(!is.na(x))))
 table(NAcounts)
 ```
 
-The output of the table shows that there are 60 variables which have values for every record, while the rest of the variables have values for 406 records or less, so those can be dropped. 
+
+The table above shows there are 60 variables which have values for every record, while the rest of the variables have far less (i.e. a lot of na's), so I'll drop those across all three datasets. Next, I'll remove any variables that have near zero variance.  To do this I'm wrapping the function in an IF statement because if it returns zero variables with near zero variance the function will remove all of the variables from the datasets. 
+
 
 ```{r }
 training <- training[ , colSums(is.na(training)) == 0]
+if (length(nearZeroVar(training)) > 0) {
+  training <- training[, -nearZeroVar(training)] 
+}
+
+testing <- testing[ ,colSums(is.na(testing)) ==0]
+if (length(nearZeroVar(testing)) > 0) {
+  testing <- testing[, -nearZeroVar(testing)] 
+}
+
+courseTesting <- courseTesting[ ,colSums(is.na(courseTesting)) ==0]
+if (length(nearZeroVar(courseTesting)) > 0) {
+  courseTesting <- courseTesting[, -nearZeroVar(courseTesting)] 
+}
+dim(training); dim(testing)
 ```
 
-Sixty variables is still a lot so next lets take a look at the names of the varialbes and determine if there are any that can be dropped based on that. 
+
+With 59 variables still in the datasets that means there was only one variable which had a near zero variance.  One last thing that I can do is look at the names of the variables and possible the raw data to determine if any others can be dropped.  This is usually something that would be done initially, however I was not able to find any documents which explained what each of the variables were and with 160 to go through I skipped that step.  
+
 
 ```{r }
 names(training)
 ```
 
-Based on the names columns 1 thru 5 can be dropped from the dataset as the record number, user name, and timestamp should not impact the model predicition.  
+
+After reviewing the names and looking at the some of the raw data I've determine that the first six variables can be removed.  The first variable just contains row number, the second is the users name, and three through six contain data related to a timestamp.
+
 
 ```{r }
-training <- training[, -c(1:5)]  
+training <- training[, -c(1:6)]  
+testing <- testing[ ,-c(1:6)]
+courseTesting <- courseTesting[ ,-c(1:6)]
 ```
 
 
+###Model Training
+The model is then created using the randomForest package with the number of tress set to the default value of 500.  Once done it's used to predict the classe variable in the testing dataset for cross validation purposes, where we'll look at the accuracy percentage to determine how well it performed.  
 
 
+```{r}
+fitMod <- randomForest(classe ~ .,training, ntree=500)
+testing$predicted.response <- predict(fitMod, testing)
+confusionMatrix(data=testing$predicted.response, reference=testing$classe, positive='yes')
+```
 
 
+Wow, 99.3% accuracy!  With an accuracy this high the out of sample error rate should be pretty low but let's double check to make sure. 
 
 
+```{r}
+missClass = function(values, prediction) {
+  sum(prediction != values)/length(values)
+}
+missClass(testing$classe, testing$predicted.response)
+```
 
 
+Based on the miss classification rate on the testing subset, an unbiased estimate of the random forest's out-of-sample error rate is 0.06%.
+
+
+###Quiz Prediction
+```{r}
+predict(fitMod, courseTesting)
+```
