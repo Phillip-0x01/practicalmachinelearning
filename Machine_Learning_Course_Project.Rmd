@@ -53,8 +53,10 @@ testing <- trainData[-inTrain,]
 dim(training); dim(testing)
 # rm(inTrain,trainData)
 ```
+```{r eval=FALSE}
 [1] 11776   160
 [1] 7846  160
+```
 
 
 ###Data Cleaning
@@ -65,10 +67,12 @@ As you can see above, the datasets contain 160 variables (less the one predictio
 NAcounts <- apply(training, 2, function(x) length(which(!is.na(x))))
 table(NAcounts)
 ```
+
+```{r eval=FALSE}
 NAcounts
    0  118  119  124  125  126  142  152  153  155  156 7846 
    6    3    1    2    4    1    2    6    1    5   69   60 
-   
+```
 
 The table above shows there are 60 variables which have values for every record, while the rest of the variables have far less (i.e. a lot of na's), so I'll drop those across all three datasets. Next, I'll remove any variables that have near zero variance.  To do this I'm wrapping the function in an IF statement because if it returns zero variables with near zero variance the function will remove all of the variables from the datasets. 
 
@@ -90,8 +94,10 @@ if (length(nearZeroVar(courseTesting)) > 0) {
 }
 dim(training); dim(testing)
 ```
-[1] 11776    59
 
+```{r eval=FALSE}
+[1] 11776    59
+```
 
 With 59 variables still in the datasets that means there was only one variable which had a near zero variance.  One last thing that I can do is look at the names of the variables and possible the raw data to determine if any others can be dropped.  This is usually something that would be done initially, however I was not able to find any documents which explained what each of the variables were and with 160 to go through I skipped that step.  
 
@@ -120,6 +126,7 @@ fitMod <- randomForest(classe ~ .,training, ntree=500)
 testing$predicted.response <- predict(fitMod, testing)
 confusionMatrix(data=testing$predicted.response, reference=testing$classe, positive='yes')
 ```
+```{r eval=FALSE}
 Confusion Matrix and Statistics
 
           Reference
@@ -139,7 +146,7 @@ Overall Statistics
                                           
                   Kappa : 0.9919          
  Mcnemar's Test P-Value : NA              
-
+```
 
 Wow, 99.3% accuracy!  With an accuracy this high the out of sample error rate should be pretty low but let's double check to make sure. 
 
@@ -150,8 +157,10 @@ missClass = function(values, prediction) {
 }
 missClass(testing$classe, testing$predicted.response)
 ```
-[1] 0.006372674
 
+```{r eval=FALSE}
+[1] 0.006372674
+```
 
 Based on the miss classification rate on the testing subset, an unbiased estimate of the random forest's out-of-sample error rate is 0.06%.
 
@@ -160,6 +169,9 @@ Based on the miss classification rate on the testing subset, an unbiased estimat
 ```{r echo=TRUE}
 predict(fitMod, courseTesting)
 ```
+
+```{r eval=FALSE}
  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 
  B  A  B  A  A  E  D  D  A  A  B  C  B  A  E  E  A  B  B  B 
 Levels: A B C D E
+```
